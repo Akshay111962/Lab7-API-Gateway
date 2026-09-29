@@ -222,9 +222,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gateway_url}}/users",
+              "raw": "{{gateway_url}}/products",
               "host": ["{{gateway_url}}"],
-              "path": ["users"]
+              "path": ["products"]
             }
           }
         }
