@@ -1,0 +1,394 @@
+{
+  "info": {
+    "_postman_id": "c6a8f7e2-4512-4d1a-8e2b-lab6microservices",
+    "name": "Microservices – Lab 6",
+    "description": "Postman Collection for Web Services & SOA Lab 6: Docker & Microservices (User Service, Product Service, Order Service, and Inter-Service Validation & Resilience).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "user_service_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "product_service_url",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "order_service_url",
+      "value": "http://localhost:3003",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. User Service (:3001)",
+      "item": [
+        {
+          "name": "Health Check (User Service)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{user_service_url}}/",
+              "host": ["{{user_service_url}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "GET All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{user_service_url}}/users",
+              "host": ["{{user_service_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "GET User by ID (101)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{user_service_url}}/users/101",
+              "host": ["{{user_service_url}}"],
+              "path": ["users", "101"]
+            }
+          }
+        },
+        {
+          "name": "POST Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"104\",\n  \"name\": \"Ananya Sen\",\n  \"email\": \"ananya.sen@campusconnect.edu\",\n  \"role\": \"student\",\n  \"department\": \"Information Technology\"\n}"
+            },
+            "url": {
+              "raw": "{{user_service_url}}/users",
+              "host": ["{{user_service_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update User (101)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aarav Patel (Updated)\",\n  \"department\": \"Artificial Intelligence\"\n}"
+            },
+            "url": {
+              "raw": "{{user_service_url}}/users/101",
+              "host": ["{{user_service_url}}"],
+              "path": ["users", "101"]
+            }
+          }
+        },
+        {
+          "name": "DELETE User (104)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{user_service_url}}/users/104",
+              "host": ["{{user_service_url}}"],
+              "path": ["users", "104"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Product Service (:3002)",
+      "item": [
+        {
+          "name": "Health Check (Product Service)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{product_service_url}}/",
+              "host": ["{{product_service_url}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "GET All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{product_service_url}}/products",
+              "host": ["{{product_service_url}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "GET Product by ID (501)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{product_service_url}}/products/501",
+              "host": ["{{product_service_url}}"],
+              "path": ["products", "501"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"504\",\n  \"name\": \"Wireless Presenter Remote\",\n  \"description\": \"USB plug-and-play laser presentation clicker\",\n  \"price\": 18.99,\n  \"category\": \"Electronics\",\n  \"stock\": 50\n}"
+            },
+            "url": {
+              "raw": "{{product_service_url}}/products",
+              "host": ["{{product_service_url}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update Product (501)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 54.99,\n  \"stock\": 30\n}"
+            },
+            "url": {
+              "raw": "{{product_service_url}}/products/501",
+              "host": ["{{product_service_url}}"],
+              "path": ["products", "501"]
+            }
+          }
+        },
+        {
+          "name": "DELETE Product (504)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{product_service_url}}/products/504",
+              "host": ["{{product_service_url}}"],
+              "path": ["products", "504"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Order Service (:3003)",
+      "item": [
+        {
+          "name": "Health Check (Order Service)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{order_service_url}}/",
+              "host": ["{{order_service_url}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "GET All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "GET Order by ID (ORD-1001)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{order_service_url}}/orders/ORD-1001",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders", "ORD-1001"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Inter-Service Communication (Order -> User & Product)",
+      "item": [
+        {
+          "name": "POST Create Order (Valid User 101 + Product 501) [201 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"101\",\n  \"productId\": \"501\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Multi-Item Order (User 102 + Products 501, 502) [201 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"102\",\n  \"items\": [\n    {\n      \"productId\": \"501\",\n      \"quantity\": 1\n    },\n    {\n      \"productId\": \"502\",\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Error Handling & Dependency Resilience",
+      "item": [
+        {
+          "name": "POST Order with Invalid User ID [404 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"99999\",\n  \"productId\": \"501\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "POST Order with Invalid Product ID [404 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"101\",\n  \"productId\": \"99999\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "POST Order when User Service is Stopped [503 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"101\",\n  \"productId\": \"501\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "POST Order after User Service Restart (Recovery) [201 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"101\",\n  \"productId\": \"501\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{order_service_url}}/orders",
+              "host": ["{{order_service_url}}"],
+              "path": ["orders"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

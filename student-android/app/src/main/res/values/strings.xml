@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Student REST App</string>
+    <string name="title_student_list">Student Directory</string>
+    <string name="title_add_student">Add New Student</string>
+    <string name="hint_name">Full Name</string>
+    <string name="hint_email">Email Address</string>
+    <string name="hint_course">Course / Department</string>
+    <string name="hint_semester">Semester (1–12)</string>
+    <string name="btn_submit">Create Student</string>
+    <string name="btn_cancel">Cancel</string>
+</resources>

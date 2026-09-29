@@ -1,0 +1,234 @@
+{
+  "info": {
+    "_postman_id": "lab7-api-gateway-service-discovery-cloud",
+    "name": "Microservices – Lab 7 (API Gateway & Cloud)",
+    "description": "Postman Collection for Web Services & SOA Lab 7: API Gateway, Configuration-Based Service Discovery & Cloud Deployment. All requests are routed exclusively through the API Gateway single public entry point.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gateway_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. API Gateway Health & Routing Table",
+      "item": [
+        {
+          "name": "GET /health (Gateway Health Check)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/health",
+              "host": ["{{gateway_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "GET / (Gateway Root Discovery)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/",
+              "host": ["{{gateway_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Gateway-Routed User Service (/users)",
+      "item": [
+        {
+          "name": "GET All Users via Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/users",
+              "host": ["{{gateway_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "GET User by ID via Gateway (101)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/users/101",
+              "host": ["{{gateway_url}}"],
+              "path": ["users", "101"]
+            }
+          }
+        },
+        {
+          "name": "POST Create User via Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"105\",\n  \"name\": \"Kabir Mehta\",\n  \"email\": \"kabir.mehta@campusconnect.edu\",\n  \"role\": \"student\",\n  \"department\": \"Robotics & Automation\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/users",
+              "host": ["{{gateway_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "PUT Update User via Gateway (101)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aarav Patel (Lab 7 Gateway Verified)\",\n  \"department\": \"Advanced Computing\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/users/101",
+              "host": ["{{gateway_url}}"],
+              "path": ["users", "101"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Gateway-Routed Product Service (/products)",
+      "item": [
+        {
+          "name": "GET All Products via Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/products",
+              "host": ["{{gateway_url}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "GET Product by ID via Gateway (501)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/products/501",
+              "host": ["{{gateway_url}}"],
+              "path": ["products", "501"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Product via Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"505\",\n  \"name\": \"Digital Oscilloscope Probe Kit\",\n  \"description\": \"High precision 100MHz oscilloscope probe kit\",\n  \"price\": 45.00,\n  \"category\": \"Equipment\",\n  \"stock\": 12\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/products",
+              "host": ["{{gateway_url}}"],
+              "path": ["products"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Gateway-Routed Order Service (/orders)",
+      "item": [
+        {
+          "name": "GET All Orders via Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["orders"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Valid Order via Gateway [201 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"101\",\n  \"productId\": \"501\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Gateway Centralized Error Handling",
+      "item": [
+        {
+          "name": "GET Unregistered Gateway Route [404 Expected]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/unregistered-service",
+              "host": ["{{gateway_url}}"],
+              "path": ["unregistered-service"]
+            }
+          }
+        },
+        {
+          "name": "GET Downstream Service Down [502 Bad Gateway Expected]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/users",
+              "host": ["{{gateway_url}}"],
+              "path": ["users"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

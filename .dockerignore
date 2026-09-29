@@ -1,0 +1,10 @@
+**/node_modules
+**/.env
+.git
+.gitignore
+student-android
+student-client
+student-api-springboot
+screenshots
+202512033.zip
+*.pdf
