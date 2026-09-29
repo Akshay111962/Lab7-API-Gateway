@@ -157,20 +157,31 @@ const getServiceRegistry = () => ({
 
 ## 7. Part C: Cloud Deployment Strategy
 
-The application stack is prepared for cloud deployment (e.g. Render, Railway, or Fly.io) backed by MongoDB Atlas:
+The application stack has been deployed and verified live in the cloud on **Render.com** backed by persistent cloud microservices:
+
+### Live Cloud Endpoints:
+- **Public Central API Gateway URL**: `https://campusconnect-api-gateway-mxeh.onrender.com`
+- **Gateway Health Check**: [https://campusconnect-api-gateway-mxeh.onrender.com/health](https://campusconnect-api-gateway-mxeh.onrender.com/health)
+- **Downstream User Microservice**: [https://campusconnect-user-service-awid.onrender.com/users](https://campusconnect-user-service-awid.onrender.com/users)
+- **Gateway-Routed User Service**: [https://campusconnect-api-gateway-mxeh.onrender.com/users](https://campusconnect-api-gateway-mxeh.onrender.com/users)
 
 ### Cloud Environment Mapping:
-| Environment Variable | Local Docker Compose | Cloud Value (e.g. Render / Railway) |
+| Environment Variable | Local Docker Compose | Live Cloud Value (Render.com) |
 | :--- | :--- | :--- |
-| `PORT` | `8000` | Assigned automatically by cloud host (e.g., `10000` on Render) |
-| `USER_SERVICE_URL` | `http://user-service:3001` | Private internal cloud URL (e.g., `http://user-service:10000`) |
-| `PRODUCT_SERVICE_URL` | `http://product-service:3002`| Private internal cloud URL (e.g., `http://product-service:10000`) |
-| `ORDER_SERVICE_URL` | `http://order-service:3003` | Private internal cloud URL (e.g., `http://order-service:10000`) |
-| `MONGO_URI` | `mongodb://mongodb:27017/...`| `mongodb+srv://<user>:<password>@cluster0.ujn2416.mongodb.net/campusconnect_...` |
+| `PORT` | `8000` | Assigned automatically by Render host (`8000`) |
+| `USER_SERVICE_URL` | `http://user-service:3001` | `https://campusconnect-user-service-awid.onrender.com` |
+| `PRODUCT_SERVICE_URL` | `http://product-service:3002`| `http://localhost:3002` |
+| `ORDER_SERVICE_URL` | `http://order-service:3003` | `http://localhost:3003` |
+| `MONGO_URI` | `mongodb://mongodb:27017/...`| `mongodb+srv://<user>:<password>@cluster0.ujn2416.mongodb.net/campusconnect_users...` |
 
-### Free-Tier Cloud Deployment Alternative:
-As permitted by Section 4 of the Lab Manual:
+### Cloud Deployment Chain & Free-Tier Documentation:
+As per Section 4 of the Lab Manual:
 > *"If your platform's free tier cannot host all three services plus the gateway at once, deploy the gateway and at least one complete, working chain (e.g. gateway + User Service, or gateway + all three if resources allow) and clearly document what was deployed and any limitation you hit."*
+
+- **Deployed Chain**: `Client / Postman` $\rightarrow$ `api-gateway` (`https://campusconnect-api-gateway-mxeh.onrender.com`) $\rightarrow$ `Configuration-Based Service Discovery` $\rightarrow$ `user-service` (`https://campusconnect-user-service-awid.onrender.com`) $\rightarrow$ `MongoDB Atlas Layer`.
+- **Live Verification**:
+  1. `GET https://campusconnect-api-gateway-mxeh.onrender.com/health` returns `HTTP 200 OK` with status `UP` and service discovery routing table.
+  2. `GET https://campusconnect-api-gateway-mxeh.onrender.com/users` returns `HTTP 200 OK` with 3 active user profiles routed dynamically through the gateway.
 
 ---
 

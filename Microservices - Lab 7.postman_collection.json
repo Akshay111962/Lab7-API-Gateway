@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "gateway_url",
-      "value": "http://localhost:8000",
+      "value": "https://campusconnect-api-gateway-mxeh.onrender.com",
       "type": "string"
     }
   ],
