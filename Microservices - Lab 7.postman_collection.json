@@ -9,7 +9,8 @@
     {
       "key": "gateway_url",
       "value": "https://campusconnect-api-gateway-mxeh.onrender.com",
-      "type": "string"
+      "type": "string",
+      "description": "Public Cloud Gateway URL (use 'http://localhost:8000' for local Docker Compose testing)"
     }
   ],
   "item": [
@@ -17,7 +18,7 @@
       "name": "1. API Gateway Health & Routing Table",
       "item": [
         {
-          "name": "GET /health (Gateway Health Check)",
+          "name": "GET /health (Gateway Health Check & Service Registry)",
           "request": {
             "method": "GET",
             "header": [],
@@ -25,7 +26,8 @@
               "raw": "{{gateway_url}}/health",
               "host": ["{{gateway_url}}"],
               "path": ["health"]
-            }
+            },
+            "description": "Reports API Gateway status, runtime port, configuration-based service discovery registry, and path routing table without proxying."
           }
         },
         {
@@ -37,7 +39,8 @@
               "raw": "{{gateway_url}}/",
               "host": ["{{gateway_url}}"],
               "path": [""]
-            }
+            },
+            "description": "Root entry point providing gateway metadata, health check link, and service route directory."
           }
         }
       ]
@@ -54,7 +57,8 @@
               "raw": "{{gateway_url}}/users",
               "host": ["{{gateway_url}}"],
               "path": ["users"]
-            }
+            },
+            "description": "Routes GET /users through API Gateway to User Service."
           }
         },
         {
@@ -66,7 +70,8 @@
               "raw": "{{gateway_url}}/users/101",
               "host": ["{{gateway_url}}"],
               "path": ["users", "101"]
-            }
+            },
+            "description": "Routes GET /users/101 through API Gateway to User Service."
           }
         },
         {
@@ -87,7 +92,8 @@
               "raw": "{{gateway_url}}/users",
               "host": ["{{gateway_url}}"],
               "path": ["users"]
-            }
+            },
+            "description": "Routes POST /users through API Gateway with JSON body to create a new user."
           }
         },
         {
@@ -108,7 +114,21 @@
               "raw": "{{gateway_url}}/users/101",
               "host": ["{{gateway_url}}"],
               "path": ["users", "101"]
-            }
+            },
+            "description": "Routes PUT /users/101 through API Gateway to update user details."
+          }
+        },
+        {
+          "name": "DELETE User by ID via Gateway (105)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/users/105",
+              "host": ["{{gateway_url}}"],
+              "path": ["users", "105"]
+            },
+            "description": "Routes DELETE /users/105 through API Gateway to delete the specified user."
           }
         }
       ]
@@ -125,7 +145,8 @@
               "raw": "{{gateway_url}}/products",
               "host": ["{{gateway_url}}"],
               "path": ["products"]
-            }
+            },
+            "description": "Routes GET /products through API Gateway to Product Service."
           }
         },
         {
@@ -137,7 +158,8 @@
               "raw": "{{gateway_url}}/products/501",
               "host": ["{{gateway_url}}"],
               "path": ["products", "501"]
-            }
+            },
+            "description": "Routes GET /products/501 through API Gateway to Product Service."
           }
         },
         {
@@ -158,7 +180,43 @@
               "raw": "{{gateway_url}}/products",
               "host": ["{{gateway_url}}"],
               "path": ["products"]
-            }
+            },
+            "description": "Routes POST /products through API Gateway to create a new catalog product."
+          }
+        },
+        {
+          "name": "PUT Update Product via Gateway (501)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 54.99,\n  \"stock\": 30\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/products/501",
+              "host": ["{{gateway_url}}"],
+              "path": ["products", "501"]
+            },
+            "description": "Routes PUT /products/501 through API Gateway to update price and stock."
+          }
+        },
+        {
+          "name": "DELETE Product by ID via Gateway (505)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/products/505",
+              "host": ["{{gateway_url}}"],
+              "path": ["products", "505"]
+            },
+            "description": "Routes DELETE /products/505 through API Gateway to remove the product."
           }
         }
       ]
@@ -175,7 +233,21 @@
               "raw": "{{gateway_url}}/orders",
               "host": ["{{gateway_url}}"],
               "path": ["orders"]
-            }
+            },
+            "description": "Routes GET /orders through API Gateway to Order Service."
+          }
+        },
+        {
+          "name": "GET Order by ID via Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/orders/ORD-991724",
+              "host": ["{{gateway_url}}"],
+              "path": ["orders", "ORD-991724"]
+            },
+            "description": "Routes GET /orders/{id} through API Gateway to fetch a specific order."
           }
         },
         {
@@ -196,28 +268,65 @@
               "raw": "{{gateway_url}}/orders",
               "host": ["{{gateway_url}}"],
               "path": ["orders"]
-            }
+            },
+            "description": "Routes POST /orders through API Gateway to Order Service, validating User and Product downstream."
+          }
+        },
+        {
+          "name": "POST Create Order with Invalid User [404 Expected]",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"999\",\n  \"productId\": \"501\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/orders",
+              "host": ["{{gateway_url}}"],
+              "path": ["orders"]
+            },
+            "description": "Routes POST /orders through API Gateway where downstream Order Service validates that User 999 does not exist."
           }
         }
       ]
     },
     {
-      "name": "5. Gateway Centralized Error Handling",
+      "name": "5. Gateway Failure Test & Centralized Error Handling",
       "item": [
         {
-          "name": "GET Unregistered Gateway Route [404 Expected]",
+          "name": "Failure Test Step 1 & 2 - Normal State: GET /users/101 [200 OK]",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gateway_url}}/unregistered-service",
+              "raw": "{{gateway_url}}/users/101",
               "host": ["{{gateway_url}}"],
-              "path": ["unregistered-service"]
-            }
+              "path": ["users", "101"]
+            },
+            "description": "Exercise Step 2: Start all services and confirm normal 200 OK response through the gateway."
           }
         },
         {
-          "name": "GET Downstream Service Down [502 Bad Gateway Expected]",
+          "name": "Failure Test Step 3, 4 & 5 - Downstream Stopped: GET /users/101 [502/503 Expected]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/users/101",
+              "host": ["{{gateway_url}}"],
+              "path": ["users", "101"]
+            },
+            "description": "Exercise Step 4 & 5: After stopping user-service container ('docker stop user-service'), gateway catches downstream network disconnect and returns clean 502/503 without crashing or hanging."
+          }
+        },
+        {
+          "name": "Cloud Live Verification: GET /products [502 Bad Gateway Expected]",
           "request": {
             "method": "GET",
             "header": [],
@@ -225,7 +334,34 @@
               "raw": "{{gateway_url}}/products",
               "host": ["{{gateway_url}}"],
               "path": ["products"]
-            }
+            },
+            "description": "On Render Cloud deployment where product-service is set to internal localhost:3002 (offline), verifies centralized 502 Bad Gateway error handling live over the internet."
+          }
+        },
+        {
+          "name": "Failure Test Step 6 - Recovery: GET /users/101 [200 OK Restored]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/users/101",
+              "host": ["{{gateway_url}}"],
+              "path": ["users", "101"]
+            },
+            "description": "Exercise Step 6: Restart User Service ('docker start user-service') and repeat request to confirm full system recovery."
+          }
+        },
+        {
+          "name": "Gateway 404 Route Not Found: GET /unregistered-service [404 Expected]",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/unregistered-service",
+              "host": ["{{gateway_url}}"],
+              "path": ["unregistered-service"]
+            },
+            "description": "Verifies that an unregistered path returns a clear gateway 404 JSON response listing valid routes."
           }
         }
       ]

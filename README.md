@@ -2,7 +2,9 @@
 ### Web Services & Service-Oriented Architecture (WSSOA) Laboratory
 
 > **Course**: Web Services & SOA (Lab 7)  
-> **Technologies**: Docker, Docker Compose, Node.js (Express.js), `http-proxy-middleware`, MongoDB Atlas, Microservices Architecture, API Gateway, Service Discovery, Postman  
+> **Student ID**: 202512033  
+> **Repository**: [Akshay111962/Lab7-API-Gateway](https://github.com/Akshay111962/Lab7-API-Gateway)  
+> **Technologies**: Docker, Docker Compose, Node.js (Express.js), `http-proxy-middleware`, MongoDB Atlas, Microservices Architecture, API Gateway, Service Discovery, Render.com Cloud, Postman  
 > **Architecture Pattern**: Central API Gateway Single Entry Point, Configuration-Based Service Discovery, Network Isolation, Centralized Request Logging & 502/503 Fault Handling  
 
 ---
@@ -16,16 +18,17 @@
 6. [Discussion Question 2: Static Config vs. Dynamic Service Discovery](#6-discussion-question-2-static-config-vs-dynamic-service-discovery)
 7. [Part C: Cloud Deployment Strategy](#7-part-c-cloud-deployment-strategy)
 8. [Docker Compose Multi-Service Orchestration](#8-docker-compose-multi-service-orchestration)
-9. [Postman Testing Guide & Verification Flow](#9-postman-testing-guide--verification-flow)
-10. [Troubleshooting Issues & Resolutions](#10-troubleshooting-issues--resolutions)
-11. [Written Reflection (5–8 Lines)](#11-written-reflection-58-lines)
-12. [Final Submission Checklist](#12-final-submission-checklist)
+9. [Postman Testing Guide & Hands-On Failure Test](#9-postman-testing-guide--hands-on-failure-test)
+10. [Submission Evidence & Verification Screenshots](#10-submission-evidence--verification-screenshots)
+11. [Troubleshooting Issues & Resolutions](#11-troubleshooting-issues--resolutions)
+12. [Written Reflection (5–8 Lines)](#12-written-reflection-58-lines)
+13. [Final Submission Checklist](#13-final-submission-checklist)
 
 ---
 
 ## 1. Executive Summary & Relationship to Lab 6
 
-In **Lab 6**, the monolithic backend was decomposed into three independently runnable microservices (`user-service`, `product-service`, `order-service`) communicating over the internal Docker bridge network (`campus-network`), with each microservice exposing its own host port directly to the client (`:3001`, `:3002`, `:3003`).
+In **Lab 6**, the monolithic backend was decomposed into three independently runnable microservices (`user-service`, `product-service`, `order-service`) communicating over an internal Docker bridge network (`campus-network`), with each microservice exposing its own host port directly to the client (`:3001`, `:3002`, `:3003`).
 
 In **Lab 7 (Current)**:
 1. **Built a Real API Gateway (`api-gateway`)**: A single unified public entry point on port `8000`. Direct external client access to `user-service`, `product-service`, and `order-service` has been **completely eliminated**; all backend services are now strictly internal to `campus-network`.
@@ -37,42 +40,57 @@ In **Lab 7 (Current)**:
 
 ## 2. Full-Stack Architecture & Gateway Topology
 
+### Mermaid Architecture Diagram:
+```mermaid
+flowchart TD
+    subgraph PUBLIC["Public Internet & Client Layer"]
+        Client["Client / Postman"]
+    end
+
+    subgraph GATEWAY["API Gateway (Port 8000 Public / Cloud Hosted)"]
+        APIGateway["api-gateway Container\n• Reverse-Proxy Router\n• Config Service Discovery\n• GET /health\n• Centralized Logger\n• 502/503 Error Handler"]
+    end
+
+    subgraph DOCKER["Docker Bridge Network (campus-network Isolated)"]
+        UserService["user-service\n(Internal Port 3001)"]
+        ProductService["product-service\n(Internal Port 3002)"]
+        OrderService["order-service\n(Internal Port 3003)"]
+    end
+
+    subgraph STORAGE["Persistent Storage Layer"]
+        Atlas["MongoDB Atlas / Local MongoDB\n• campusconnect_users\n• campusconnect_products\n• campusconnect_orders"]
+    end
+
+    Client -->|"HTTP Requests (:8000 / HTTPS)"| APIGateway
+    APIGateway -->|"/users/*"| UserService
+    APIGateway -->|"/products/*"| ProductService
+    APIGateway -->|"/orders/*"| OrderService
+
+    OrderService -.->|"REST: GET /users/:id"| UserService
+    OrderService -.->|"REST: GET /products/:id"| ProductService
+
+    UserService --> Atlas
+    ProductService --> Atlas
+    OrderService --> Atlas
+
+    classDef public fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
+    classDef gateway fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef internal fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+    classDef db fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+
+    class Client public;
+    class APIGateway gateway;
+    class UserService,ProductService,OrderService internal;
+    class Atlas db;
 ```
-+───────────────────────────────────────────────────────────────────────────────────────────────────+
-│                                        PUBLIC INTERNET / CLIENT                                   │
-│                                                   │                                               │
-│                                                   │ (HTTP REST Requests to ONE Single Public Port)│
-│                                                   ▼ :8000                                         │
-│   ┌─────────────────────────────────────────────────────────────────────────────────────────┐     │
-│   │                         api-gateway Container (Port 8000)                               │     │
-│   │   • Single Entry Point                                • Centralized Request Logger      │     │
-│   │   • Config-Based Service Discovery                    • Fail-Fast 502/503 Error Handler │     │
-│   │   • Health Check: GET /health (Local)                 • Reverse-Proxy Engine            │     │
-│   └───────┬───────────────────────────────┬───────────────────────────────┬─────────────────┘     │
-│           │                               │                               │                       │
-│           │ Proxy: /users/*               │ Proxy: /products/*            │ Proxy: /orders/*      │
-│           ▼                               ▼                               ▼                       │
-│   ════════╪═══════════════════════════════╪═══════════════════════════════╪════════════════════   │
-│           │     ISOLATED DOCKER BRIDGE NETWORK: campus-network            │                       │
-│           │     (Backend services NOT reachable from outside)             │                       │
-│           │                                                               │                       │
-│   ┌───────┴──────────┐            ┌───────────────┴──┐            ┌───────┴──────────┐            │
-│   │   user-service   │            │  product-service │            │  order-service   │            │
-│   │   Internal: 3001 │            │  Internal: 3002  │            │  Internal: 3003  │            │
-│   └───────┬──────────┘            └───────┬──────────┘            └───────┬──────────┘            │
-│           │                               │                               │ (Inter-Service REST)  │
-│           │◄──────────────────────────────┼───────────────────────────────┤ GET /users/{id}       │
-│           │                               │◄──────────────────────────────┤ GET /products/{id}    │
-│           │                               │                               │                       │
-│           │ mongodb:27017/                │ mongodb:27017/                │ mongodb:27017/        │
-│           │ campusconnect_users           │ campusconnect_products        │ campusconnect_orders  │
-│           │ (or MongoDB Atlas Cloud)      │ (or MongoDB Atlas Cloud)      │ (or MongoDB Atlas)    │
-│           ▼                               ▼                               ▼                       │
-│   ┌─────────────────────────────────────────────────────────────────────────────────────────┐     │
-│   │                         Database Layer (Local MongoDB or MongoDB Atlas)                 │     │
-│   └─────────────────────────────────────────────────────────────────────────────────────────┘     │
-+───────────────────────────────────────────────────────────────────────────────────────────────────+
-```
+
+### Layer Responsibility & Exposure Table:
+| Layer | Responsibility | Reachable From |
+| :--- | :--- | :--- |
+| **Client / Postman** | Sends HTTP requests to one public address | Internet |
+| **API Gateway** | Routes `/users`, `/products`, `/orders`; logging; error handling | Internet (public) |
+| **User / Product / Order Services** | Owns domain business logic and local data access | Docker network only (`campus-network`) |
+| **MongoDB Atlas** | Persistent storage per service | Microservices (via secure connection string) |
 
 ---
 
@@ -85,21 +103,35 @@ The API Gateway is constructed using **Node.js, Express, and `http-proxy-middlew
 | :--- | :--- | :--- | :--- |
 | `GET /health` | Gateway Local Route | None (No proxying) | `http://localhost:8000/health` |
 | `GET /` | Gateway Directory | None (Root metadata) | `http://localhost:8000/` |
-| `/users/*` | User Microservice | `http://user-service:3001` | `GET http://localhost:8000/users` |
-| `/products/*` | Product Microservice | `http://product-service:3002` | `GET http://localhost:8000/products` |
-| `/orders/*` | Order Microservice | `http://order-service:3003` | `POST http://localhost:8000/orders` |
+| `GET, POST, PUT, DELETE /users/*` | User Microservice | `http://user-service:3001` | `GET http://localhost:8000/users/101` |
+| `GET, POST, PUT, DELETE /products/*`| Product Microservice | `http://product-service:3002` | `GET http://localhost:8000/products/501` |
+| `GET, POST /orders/*` | Order Microservice | `http://order-service:3003` | `POST http://localhost:8000/orders` |
 
 ### Key Gateway Capabilities:
-1. **GET /health**: Returns the gateway operational state, registered service discovery targets, and route definitions.
-2. **Request Logging**: Intercepts all traffic and outputs structured timestamps, HTTP method, target route, HTTP status code, and latency in milliseconds.
-3. **Centralized 502/503 Error Handling**: If a target service container crashes or is unreachable, the proxy intercepts the network failure and returns a structured `502 Bad Gateway` JSON response with timestamp and diagnostic context, preventing hanging connections.
-4. **Port Isolation**: In `compose.yaml`, `user-service`, `product-service`, and `order-service` use `expose:` instead of `ports:`, blocking external access while allowing container-to-container communication.
+1. **GET /health**: Reports gateway operational status (`UP`), active port, and dynamic service discovery targets without proxying.
+2. **Request Logging**: Intercepts all traffic and outputs structured timestamps, HTTP method, target route, HTTP status code, and latency in milliseconds:
+   ```text
+   [API-GATEWAY] 2026-10-13T13:43:22.325Z | Method: GET | Path: /health | Target: Gateway (Local /health) | Status: 200 (2ms)
+   [API-GATEWAY] 2026-10-13T13:43:30.120Z | Method: GET | Path: /users/101 | Target: User Service | Status: 200 (15ms)
+   ```
+3. **Centralized 502/503 Error Handling**: If a target service container crashes or is unreachable, the proxy catches the connection failure and returns a structured `502 Bad Gateway` JSON response with diagnostic context:
+   ```json
+   {
+     "error": "Bad Gateway",
+     "message": "User Service is currently unreachable. Downstream connection refused or timed out.",
+     "targetService": "User Service",
+     "targetUrl": "http://user-service:3001",
+     "statusCode": 502,
+     "timestamp": "2026-10-13T13:45:00.000Z"
+   }
+   ```
+4. **Port Isolation**: In `compose.yaml` / `docker-compose.yml`, `user-service`, `product-service`, and `order-service` use `expose:` instead of `ports:`, blocking external access while allowing container-to-container communication.
 
 ---
 
 ## 4. Part B: Configuration-Based Service Discovery
 
-The API Gateway strictly avoids hardcoded URLs in routing logic. Downstream service URLs are externalized into a service registry loader ([`api-gateway/config/services.js`](file:///c:/Lab_Sem3/WSSOA/Lab4/api-gateway/config/services.js)):
+The API Gateway strictly avoids hardcoded URLs in routing logic. Downstream service URLs are externalized into a service registry loader ([`api-gateway/config/services.js`](api-gateway/config/services.js)):
 
 ```javascript
 const getServiceRegistry = () => ({
@@ -121,9 +153,11 @@ const getServiceRegistry = () => ({
 });
 ```
 
-### Proving Dynamic Configuration:
-- To migrate `user-service` to a new host or port, change `USER_SERVICE_URL` in the environment (`.env` or `compose.yaml`).
-- Upon restart, the gateway queries `getServiceRegistry()`, reads the updated target URL, and immediately routes requests to the new destination **without modifying a single line of application source code**.
+### Proving Dynamic Configuration Without Code Changes:
+To verify that service locations are purely configuration-driven:
+1. Update `USER_SERVICE_URL` in `.env` or `docker-compose.yml` to point to a new location (e.g. `http://user-service-v2:3010` or a remote host `https://campusconnect-user-service-awid.onrender.com`).
+2. Restart the gateway (`docker compose restart api-gateway`).
+3. The gateway re-evaluates `getServiceRegistry()`, binds the proxy target to the updated endpoint, and immediately routes all `/users/*` requests to the new location **without editing a single line of application source code**.
 
 ---
 
@@ -132,9 +166,9 @@ const getServiceRegistry = () => ({
 > **Question**: *Why introduce an API Gateway instead of letting clients call each service directly? Think about a single entry point, hiding internal structure, and centralizing concerns like logging and error handling.*
 
 **Answer**:
-1. **Single Entry Point & Protocol Decoupling**: Clients only need to know a single domain name and port (e.g. `http://localhost:8000` or a public cloud domain). They do not need to track dozens of internal microservice ports and IP addresses.
-2. **Hiding Internal Architecture & Security Boundary**: By placing backend services behind the gateway inside an internal Docker network, backend containers are shielded from direct public exposure, preventing unauthorized port scans and attacks.
-3. **Centralized Cross-Cutting Concerns**: Concerns like authentication/authorization, SSL termination, request logging, rate limiting, and CORS headers are handled once at the gateway rather than reimplemented redundantly across every microservice.
+1. **Single Public Entry Point & Simplified Client Interface**: Clients only need to know a single domain and port (`http://localhost:8000` or a public cloud URL). They do not need to track dozens of internal microservice ports and IP addresses, drastically simplifying mobile and web client configuration.
+2. **Hiding Internal Architecture & Security Boundary**: By placing backend services behind the gateway inside an internal Docker network, backend containers are shielded from direct public exposure, preventing unauthorized port scans, direct attacks, and protocol exposure.
+3. **Centralized Cross-Cutting Concerns**: Concerns like authentication/authorization, SSL termination, request logging, rate limiting, and CORS headers are handled once at the perimeter rather than reimplemented redundantly across every microservice.
 4. **Resilience & Uniform Error Translation**: Downstream network drops or service crashes are intercepted at the perimeter and translated into clean, standardized `502 Bad Gateway` error payloads instead of exposing internal container stack traces to the client.
 
 ---
@@ -187,7 +221,7 @@ As per Section 4 of the Lab Manual:
 
 ## 8. Docker Compose Multi-Service Orchestration
 
-The complete Lab 7 stack is launched via [`compose.yaml`](file:///c:/Lab_Sem3/WSSOA/Lab4/compose.yaml):
+The complete Lab 7 stack is launched via [`compose.yaml`](compose.yaml) / [`docker-compose.yml`](docker-compose.yml):
 
 ```powershell
 # 1. Build and launch all 5 containers
@@ -197,7 +231,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-### Container Status:
+### Container Status & Network Isolation:
 ```text
 NAME              IMAGE                  SERVICE           STATUS                    PORTS
 api-gateway       lab4-api-gateway       api-gateway       Up (healthy)              0.0.0.0:8000->8000/tcp
@@ -206,25 +240,85 @@ product-service   lab4-product-service   product-service   Up (healthy)         
 user-service      lab4-user-service      user-service      Up (healthy)              3001/tcp (internal)
 mongodb           mongo:latest           mongodb           Up                        0.0.0.0:27017->27017/tcp
 ```
+*Note: Ports 3001, 3002, and 3003 are marked `(internal)` and use `expose:`, meaning direct external access from the host is prevented, satisfying the network isolation requirement.*
 
 ---
 
-## 9. Postman Testing Guide & Verification Flow
+## 9. Postman Testing Guide & Hands-On Failure Test
 
 A dedicated Lab 7 Postman collection has been generated:  
-[`Microservices - Lab 7.postman_collection.json`](file:///c:/Lab_Sem3/WSSOA/Lab4/Microservices%20-%20Lab%207.postman_collection.json)
+[`Microservices - Lab 7.postman_collection.json`](Microservices%20-%20Lab%207.postman_collection.json)
 
-### Expected Verification Flow:
-1. **Gateway Health Check**: `GET http://localhost:8000/health` ➔ Returns `200 OK` with service discovery registry and routes.
-2. **User Service via Gateway**: `GET http://localhost:8000/users` ➔ Returns `200 OK` with seed users.
-3. **Product Service via Gateway**: `GET http://localhost:8000/products` ➔ Returns `200 OK` with seed products.
-4. **Order Service via Gateway**: `POST http://localhost:8000/orders` with `{"userId":"101","productId":"501","quantity":2}` ➔ Returns `201 Created` with total `$99.98`.
-5. **Direct Access Blocked**: Calling `http://localhost:3001/users` directly from the host fails/times out, proving internal network isolation.
-6. **Centralized Error Handling (502)**: Stop User Service (`docker stop user-service`), call `GET http://localhost:8000/users` ➔ Returns `502 Bad Gateway`. Restart User Service (`docker start user-service`) ➔ Returns `200 OK`.
+### Hands-On Exercise: Gateway Failure Test (6 Steps)
+As specified in Section 2 of the Lab Manual:
+1. **Start all services**: Launch `api-gateway`, `user-service`, `product-service`, `order-service`.
+2. **Normal State**: Call `GET /users/101` through the gateway $\rightarrow$ Returns `200 OK` with user data.
+3. **Stop User Service**: Run `docker stop user-service`.
+4. **Repeat the request**: Call `GET /users/101` through the gateway.
+5. **Verify Centralized Error Response**: Gateway catches downstream outage and returns `502 Bad Gateway` (or `503 Service Unavailable`) — it does **not** hang or crash.
+6. **Restart & Recover**: Run `docker start user-service` and repeat `GET /users/101` $\rightarrow$ Gateway recovers and returns `200 OK`.
 
 ---
 
-## 10. Troubleshooting Issues & Resolutions
+## 10. Submission Evidence & Verification Screenshots
+
+All verification tests and cloud deployment dashboards have been recorded and saved in the [`Screenshots/`](Screenshots/) directory:
+
+### 1. API Gateway Health Check (`GET /health`)
+Shows the gateway running on port 8000 with its configuration-based service discovery registry and routing table:
+![01 Gateway Health Check](Screenshots/01_gateway_health_check_200.png)
+
+---
+
+### 2. Gateway-Routed User Service (`GET /users`)
+Demonstrates client calling `GET /users` via port 8000, successfully routed internally to `user-service`:
+![02 Gateway Users Route](Screenshots/02_gateway_users_route_200.png)
+
+---
+
+### 3. Gateway-Routed Product Service (`GET /products`)
+Demonstrates client calling `GET /products` via port 8000, successfully routed internally to `product-service`:
+![03 Gateway Products Route](Screenshots/03_gateway_products_route_200.png)
+
+---
+
+### 4. Gateway-Routed Order Service (`GET /orders`)
+Demonstrates client calling `GET /orders` via port 8000, showing inter-service data enrichment:
+![04 Gateway Orders Route](Screenshots/04_gateway_orders_route_200.png)
+
+---
+
+### 5. Unregistered Gateway Route Error (`GET /unregistered-service`)
+Demonstrates clean centralized 404 handling when requesting a path not in the routing table:
+![05 Gateway Unregistered Route 404](Screenshots/05_gateway_unregistered_route_404.png)
+
+---
+
+### 6. Downstream Service Down Fault Handling (`502 Bad Gateway`)
+Demonstrates centralized error handling: when downstream service is offline, gateway returns structured `502 Bad Gateway` without crashing:
+![06 Gateway 502 Bad Gateway Fault Handling](Screenshots/06_gateway_502_bad_gateway_fault_handling.png)
+
+---
+
+### 7. Render Cloud Dashboard: Live User Service Deployment
+Shows the containerized `campusconnect-user-service` running live on Render:
+![07 Render Cloud User Service](Screenshots/07_render_cloud_user_service_live.png)
+
+---
+
+### 8. Render Cloud Dashboard: Live API Gateway Deployment
+Shows the containerized `campusconnect-api-gateway` running live on Render:
+![08 Render Cloud API Gateway](Screenshots/08_render_cloud_api_gateway_live.png)
+
+---
+
+### 9. Render Cloud Dashboard: Service Overview
+Shows full cloud overview of active containerized services deployed in the Oregon region:
+![09 Render Cloud Dashboard Overview](Screenshots/09_render_cloud_dashboard_overview.png)
+
+---
+
+## 11. Troubleshooting Issues & Resolutions
 
 1. **502 Bad Gateway on Gateway Request**:
    - *Cause*: Downstream microservice is stopped or still starting up.
@@ -233,25 +327,28 @@ A dedicated Lab 7 Postman collection has been generated:
    - *Cause*: Expected behavior in Lab 7. Ports are isolated inside `campus-network`.
    - *Fix*: Route all requests through the gateway at `http://localhost:8000`.
 3. **Cloud Cold Start Delays**:
-   - *Cause*: Free-tier cloud instances (e.g. Render) spin down during inactivity.
-   - *Fix*: Send initial `GET /health` to wake up container before executing Postman suites.
+   - *Cause*: Free-tier cloud instances (e.g. Render) spin down during inactivity (hibernate state).
+   - *Fix*: Send an initial `GET /health` request to wake up the container before executing Postman suites.
 
 ---
 
-## 11. Written Reflection (5–8 Lines)
+## 12. Written Reflection (5–8 Lines)
 
 > Introducing the API Gateway and cloud deployment significantly elevated the architectural maturity of CampusConnect compared to Lab 6. By collapsing three external endpoints into a single public gateway on port 8000, client integration became vastly simpler while enabling complete isolation of backend microservices inside an unexposed Docker network. Externalizing service discovery into configuration decoupled routing logic from physical infrastructure, allowing seamless URL and port reconfigurations without code edits. Furthermore, moving towards cloud deployment and centralized logging provides perimeter observability and unified fault containment, transforming our local prototype into a secure, production-aligned distributed system.
 
 ---
 
-## 12. Final Submission Checklist
+## 13. Final Submission Checklist
 
 - [x] `api-gateway` service built with Express & `http-proxy-middleware`
 - [x] Dockerfile and `.dockerignore` for `api-gateway`
-- [x] `compose.yaml` exposes ONLY port 8000; backend services internal-only
+- [x] `compose.yaml` / `docker-compose.yml` exposes ONLY port 8000; backend services internal-only
 - [x] Configuration-based service discovery implemented via `config/services.js` and env vars
 - [x] `GET /health` implemented and reporting routing table
 - [x] Centralized request logging and `502 Bad Gateway` error handling verified
-- [x] Postman Collection exported ([`Microservices - Lab 7.postman_collection.json`](file:///c:/Lab_Sem3/WSSOA/Lab4/Microservices%20-%20Lab%207.postman_collection.json))
+- [x] Postman Collection exported ([`Microservices - Lab 7.postman_collection.json`](Microservices%20-%20Lab%207.postman_collection.json))
 - [x] Discussion questions answered in README
+- [x] Hands-on failure test documented with 502/503 response and recovery
+- [x] Cloud deployment verified on Render.com with live public URLs
+- [x] Evidence screenshots included and embedded in README
 - [x] Written reflection (5–8 lines) completed in README
