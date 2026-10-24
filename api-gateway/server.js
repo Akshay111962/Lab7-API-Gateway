@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const client = require('prom-client');
 const { createProxyMiddleware, fixRequestBody } = require('http-proxy-middleware');
 const { getServiceRegistry } = require('./config/services');
 
@@ -18,21 +19,62 @@ const PORT = process.env.PORT || 8000;
 // Enable CORS
 app.use(cors());
 
+// Initialize Prometheus Metrics Collection
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({ register: client.register });
+
+const httpRequestsTotal = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests processed by API Gateway',
+  labelNames: ['method', 'route', 'status', 'target'],
+});
+
+const httpRequestDurationSeconds = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Histogram of HTTP request durations in seconds',
+  labelNames: ['method', 'route', 'status'],
+  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+});
+
 // Load dynamic service discovery registry
 const services = getServiceRegistry();
 
-// ─── Gateway Request Logger Middleware ───────────────────────────────────────
-// Logs: method, path, target service, response status (as required by Lab 7 spec)
+// ─── Gateway Request Logger & Metrics Middleware ────────────────────────────
+// Logs: method, path, target service, response status & increments Prometheus counters
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    const target = req.targetService || (req.originalUrl.startsWith('/health') ? 'Gateway (Local /health)' : 'Gateway');
+    const target = req.targetService || (req.originalUrl.startsWith('/health') ? 'Gateway (Local /health)' : req.originalUrl.startsWith('/metrics') ? 'Gateway (Metrics)' : 'Gateway');
+    const route = req.baseUrl || req.path || req.originalUrl.split('?')[0];
+
+    // Record Prometheus Metrics
+    httpRequestsTotal.inc({
+      method: req.method,
+      route: route,
+      status: String(res.statusCode),
+      target: target,
+    });
+    httpRequestDurationSeconds.observe(
+      { method: req.method, route: route, status: String(res.statusCode) },
+      duration / 1000
+    );
+
     console.log(
       `[API-GATEWAY] ${new Date().toISOString()} | Method: ${req.method} | Path: ${req.originalUrl} | Target: ${target} | Status: ${res.statusCode} (${duration}ms)`
     );
   });
   next();
+});
+
+// ─── Prometheus Scrape Endpoint (/metrics) ───────────────────────────────────
+app.get('/metrics', async (_req, res) => {
+  try {
+    res.set('Content-Type', client.register.contentType);
+    res.end(await client.register.metrics());
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
 });
 
 // ─── Health Check Endpoint (Local Gateway Route — No Proxying) ───────────────

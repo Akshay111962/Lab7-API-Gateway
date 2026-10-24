@@ -1,0 +1,127 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Lab 8: CampusConnect API Gateway & Kubernetes Workload Observability",
+      "type": "row"
+    },
+    {
+      "id": 1,
+      "title": "Gateway & Service Availability (Target UP)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "up",
+          "legendFormat": "{{job}} ({{instance}})"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "API Traffic Rate (req/sec)",
+      "type": "timeseries",
+      "gridPos": { "h": 5, "w": 9, "x": 6, "y": 1 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_requests_total[1m]))",
+          "legendFormat": "Total RPS"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Error Rate (HTTP 5xx)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 9, "x": 15, "y": 1 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[1m])) or vector(0)",
+          "legendFormat": "5xx Error RPS"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.01 }]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Traffic Distribution by Route & Method",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum by (route, method) (rate(http_requests_total[1m]))",
+          "legendFormat": "{{method}} {{route}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Response Status Code Breakdown",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum by (status) (http_requests_total)",
+          "legendFormat": "HTTP {{status}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Gateway Request Latency p95 (Seconds)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))",
+          "legendFormat": "p95 Latency"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["lab8", "kubernetes", "prometheus", "api-gateway"],
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Lab 8: CampusConnect Observability Dashboard",
+  "version": 1
+}

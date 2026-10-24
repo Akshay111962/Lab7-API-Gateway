@@ -1,0 +1,192 @@
+{
+  "info": {
+    "_postman_id": "lab8-kubernetes-cicd-prometheus-grafana",
+    "name": "Microservices – Lab 8 (Kubernetes, CI/CD & Monitoring)",
+    "description": "Postman Collection for Web Services & SOA Lab 8: Kubernetes Deployment, Service Discovery, Self-Healing, Scaling, Prometheus & Grafana Monitoring.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "k8s_gateway_url",
+      "value": "http://localhost:30080",
+      "type": "string",
+      "description": "Kubernetes API Gateway NodePort (30080) or Cluster Ingress"
+    },
+    {
+      "key": "prometheus_url",
+      "value": "http://localhost:30090",
+      "type": "string",
+      "description": "Prometheus NodePort (30090)"
+    },
+    {
+      "key": "grafana_url",
+      "value": "http://localhost:30300",
+      "type": "string",
+      "description": "Grafana NodePort (30300)"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Gateway & Kubernetes Health Probes",
+      "item": [
+        {
+          "name": "GET /health (Gateway Liveness & Readiness Probe)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{k8s_gateway_url}}/health",
+              "host": ["{{k8s_gateway_url}}"],
+              "path": ["health"]
+            },
+            "description": "Checks the API Gateway Kubernetes liveness/readiness probe endpoint."
+          }
+        },
+        {
+          "name": "GET /metrics (Prometheus Metric Scrape Endpoint)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{k8s_gateway_url}}/metrics",
+              "host": ["{{k8s_gateway_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Exposes standard Prometheus metrics (http_requests_total, latency histogram, node memory)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Gateway Routing to Kubernetes Services",
+      "item": [
+        {
+          "name": "GET All Users (via user-service)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{k8s_gateway_url}}/users",
+              "host": ["{{k8s_gateway_url}}"],
+              "path": ["users"]
+            },
+            "description": "Gateway routes request to Kubernetes user-service ClusterIP."
+          }
+        },
+        {
+          "name": "GET User by ID (101)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{k8s_gateway_url}}/users/101",
+              "host": ["{{k8s_gateway_url}}"],
+              "path": ["users", "101"]
+            }
+          }
+        },
+        {
+          "name": "GET All Products (via product-service)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{k8s_gateway_url}}/products",
+              "host": ["{{k8s_gateway_url}}"],
+              "path": ["products"]
+            }
+          }
+        },
+        {
+          "name": "GET All Orders (via order-service with Inter-Service Call)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{k8s_gateway_url}}/orders",
+              "host": ["{{k8s_gateway_url}}"],
+              "path": ["orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Prometheus Monitoring Queries (PromQL)",
+      "item": [
+        {
+          "name": "Prometheus Readiness Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{prometheus_url}}/-/ready",
+              "host": ["{{prometheus_url}}"],
+              "path": ["-", "ready"]
+            }
+          }
+        },
+        {
+          "name": "Prometheus Active Targets API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{prometheus_url}}/api/v1/targets",
+              "host": ["{{prometheus_url}}"],
+              "path": ["api", "v1", "targets"]
+            },
+            "description": "Verifies that api-gateway and microservice scrape targets are in UP state."
+          }
+        },
+        {
+          "name": "PromQL Query: Target UP State (up)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{prometheus_url}}/api/v1/query?query=up",
+              "host": ["{{prometheus_url}}"],
+              "path": ["api", "v1", "query"],
+              "query": [
+                { "key": "query", "value": "up" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PromQL Query: Request Rate (rate(http_requests_total[5m]))",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{prometheus_url}}/api/v1/query?query=rate(http_requests_total[5m])",
+              "host": ["{{prometheus_url}}"],
+              "path": ["api", "v1", "query"],
+              "query": [
+                { "key": "query", "value": "rate(http_requests_total[5m])" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Grafana Observability Endpoint",
+      "item": [
+        {
+          "name": "Grafana Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{grafana_url}}/api/health",
+              "host": ["{{grafana_url}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

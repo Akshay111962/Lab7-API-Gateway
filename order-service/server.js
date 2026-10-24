@@ -27,11 +27,11 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Root Health Check & Dependency Metadata
-app.get('/', (_req, res) => {
+// Root & Health Check Endpoint for Kubernetes Probes
+app.get(['/', '/health'], (_req, res) => {
   res.status(200).json({
     service: 'order-service',
-    status: 'healthy',
+    status: 'UP',
     version: '1.0.0',
     port: Number(PORT),
     dependencies: {
