@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: ghcr.io/akshay111962/api-gateway:latest
+          image: ghcr.io/akshay111962/api-gateway:lab8
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

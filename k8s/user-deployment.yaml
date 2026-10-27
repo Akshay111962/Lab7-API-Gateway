@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: ghcr.io/akshay111962/user-service:latest
+          image: ghcr.io/akshay111962/user-service:lab8
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3001

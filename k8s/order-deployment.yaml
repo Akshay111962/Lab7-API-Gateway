@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: ghcr.io/akshay111962/order-service:latest
+          image: ghcr.io/akshay111962/order-service:lab8
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3003
